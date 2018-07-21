@@ -28,7 +28,7 @@ import java.util.Queue;
  * of csExecution time & interRequest time.
  *
  */
-class ExpProbTime{
+class ExpProbTime{//
 	protected double var = 1.0;
 	public ExpProbTime(double var){
 		this.var = var;
