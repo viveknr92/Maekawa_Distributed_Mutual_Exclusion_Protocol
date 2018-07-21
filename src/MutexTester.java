@@ -1,6 +1,6 @@
 /**
- * @author Bharat M Bhavsar, Sri Vidya Varanasi, Arvind Pandiyan
- * @since 04/01/2016
+ * @author 
+ * @since 
  * @version 1.0
  * This is tester code to check if mutual execution persists in given
  * output file set.
