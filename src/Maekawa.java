@@ -1,9 +1,5 @@
 /**
  * 
- * @author Bharat M Bhavsar, Sri Vidya Varanasi, Arvind Pandiyan
- * @since 04/01/2016
- * @version 1.0
- * @description
  * 	This program uses Maekawa Distributed Mutual Exclusion (DME) Protocol to ensure
  *  that each Critical Execution request is satisfied and mutual
  *  exclusion exists while a process is in critical section. 
@@ -32,14 +28,14 @@ import java.util.Queue;
  * of csExecution time & interRequest time.
  *
  */
-class ExponentialRV{
-	protected double mu = 1.0;
-	public ExponentialRV(double mu){
-		this.mu = mu;
+class ExpProbTime{
+	protected double var = 1.0;
+	public ExpProbTime(double var){
+		this.var = var;
 	}
 	
-	public int nextInt(){
-		return (int)(-mu * Math.log(Math.random()));
+	public int NextNum(){
+		return (int)(-var * Math.log(Math.random()));
 	}
 	
 }
@@ -56,27 +52,27 @@ class ExponentialRV{
  */
 public class Maekawa {
 	
-	static MessageProcessor working;
-	String[] quorumMembers;
+	static MaekawaMsgHandler working;
+	String[] quorums;
 	static int noOfNodes;
-	Socket[] clientSocketForNode;
-	DataOutputStream[] clientOutputStream;
-	DataInputStream[] serverInputStream;
+	Socket[] clientSocket;
+	DataOutputStream[] clientOStream;
+	DataInputStream[] serverInStream;
 	int nodeId;
 	static String[] nodeNames;
 	static int[] nodePorts;
-	static Queue<String> outgoingMessages;
-	Queue<String> inqMessages;
+	static Queue<String> OutMsgs;
+	Queue<String> inqMsgs;
 	String configFile;
 	int interReqDelay,csExecTime,noOfReq;
 	FileOutputStream out = null;
 	static Boolean isLocked = false;
-	static Integer grantCounter = 0;
-	Comparator<String> sortQueue = new PQsort();
-	PriorityQueue<String> pendingRequests = new PriorityQueue<String>(10,sortQueue);
+	static Integer NoOfGrants = 0;
+	Comparator<String> OurQueue = new PriorityQ();
+	PriorityQueue<String> pendingRequests = new PriorityQueue<String>(10,OurQueue);
 	Integer[] lockedProcess = new Integer[2];
 	boolean InqSent = false;
-	HashMap<Integer,Boolean> quorumResponse;
+	HashMap<Integer,Boolean> QuorumReply;
 	public static Integer seqNumber = 0;
 	boolean csRequestGranted = false;
 	boolean messageOffered = false;
@@ -89,7 +85,7 @@ public class Maekawa {
 	 * is prioritized based on both logical clock and process ID (Lamport Total-Ordering)
 	 * 
 	 */
-	public static class PQsort implements Comparator<String> {
+	public static class PriorityQ implements Comparator<String> {
 		 
 		@Override
 		public int compare(String arg0, String arg1) {
@@ -116,7 +112,7 @@ public class Maekawa {
 			
 			ServerSocket serverSocketForNode;
 			Socket serverSocket=null;
-			working = new MessageProcessor();
+			working = new MaekawaMsgHandler();
 			try
 			{
 			serverSocketForNode = new ServerSocket(nodePorts[nodeId]);
@@ -131,7 +127,7 @@ public class Maekawa {
 				catch(IOException e){
 					
 				}
-				new clientPersistent(serverSocket).start();
+				new clientConnections(serverSocket).start();
 			}
 		}
 		catch(IOException ex)
@@ -146,10 +142,10 @@ public class Maekawa {
 	 * object to synchronize all server threads.
 	 * 
 	 */
-	class clientPersistent extends Thread{
+	class clientConnections extends Thread{
 		Socket clientConnected;
 		
-		public clientPersistent(Socket clientConnected){
+		public clientConnections(Socket clientConnected){
 			this.clientConnected=clientConnected;
 			
 		}
@@ -171,7 +167,7 @@ public class Maekawa {
 					while(reader.available()>0){
 						message = reader.readUTF();
 						synchronized (working) {
-							working.messageProcessing(message);
+							working.MsgHandling(message);
 						}
 					}
 				}
@@ -196,24 +192,24 @@ public class Maekawa {
 	 * synchronize DME for each server threads.
 	 * 
 	 */
-	class MessageProcessor{
+	class MaekawaMsgHandler{
 	
 		String message = null;
 		
-		public MessageProcessor(String message) {
+		public MaekawaMsgHandler(String message) {
 			this.message=message;
 		}
 		
-		public MessageProcessor() {
+		public MaekawaMsgHandler() {
 			// TODO Auto-generated constructor stub
 		}
 
-		public void messageProcessing(String message){
+		public void MsgHandling(String message){
 		
 		String[] messageParts,tempPendingQueueHead;
 		String pendingQueueHead;
 		
-		synchronized(outgoingMessages){
+		synchronized(OutMsgs){
 			if(message!=null){
 				messageParts = message.split("#");
 				int senderID = Integer.parseInt(messageParts[1].trim());
@@ -273,14 +269,14 @@ public class Maekawa {
 					 * received message: 'Inquire' to release access to CS
 					 */
 				case "INQ":
-					if(quorumResponse.containsValue(false)){
+					if(QuorumReply.containsValue(false)){
 						seqNumber++;
 						sendMessage("YIELD", senderID, seqNumber);//send yield
-						quorumResponse.remove(senderID);
-						grantCounter--;
-					}else if((grantCounter < quorumMembers.length )){
+						QuorumReply.remove(senderID);
+						NoOfGrants--;
+					}else if((NoOfGrants < quorums.length )){
 						
-						inqMessages.add(senderID+" "+seqNum);
+						inqMsgs.add(senderID+" "+seqNum);
 					}
 					break;
 					/**
@@ -288,15 +284,15 @@ public class Maekawa {
 					 */
 				case "FAIL":						
 					//monitor the processes from which fail has been received
-					quorumResponse.put(senderID, false);
-					//Check if there is any in inq queue, if yes send yield, decrement grantCounter.
-					while(!inqMessages.isEmpty()){
-						String m = inqMessages.poll();
+					QuorumReply.put(senderID, false);
+					//Check if there is any in inq queue, if yes send yield, decrement NoOfGrants.
+					while(!inqMsgs.isEmpty()){
+						String m = inqMsgs.poll();
 						String[] p = m.split(" ");
 						seqNumber++;
 						sendMessage("YIELD", Integer.parseInt(p[0]), seqNumber);
-						quorumResponse.remove(Integer.parseInt(p[0]));
-						grantCounter--;
+						QuorumReply.remove(Integer.parseInt(p[0]));
+						NoOfGrants--;
 					}
 					break;
 					/**
@@ -359,8 +355,8 @@ public class Maekawa {
 	 * @throws IOException
 	 */
 	public void runClient() throws IOException{
-		clientSocketForNode = new Socket[noOfNodes];
-		clientOutputStream = new DataOutputStream[noOfNodes];
+		clientSocket = new Socket[noOfNodes];
+		clientOStream = new DataOutputStream[noOfNodes];
 		String currentOutgoingMessege = null;
 		String[] messageParts;
 		/**
@@ -369,8 +365,8 @@ public class Maekawa {
 		 */
 		for(int neighbor=0; neighbor<noOfNodes;){
 			try{
-				clientSocketForNode[neighbor] = new Socket(nodeNames[neighbor], nodePorts[neighbor]);
-				clientOutputStream[neighbor] = new DataOutputStream(clientSocketForNode[neighbor].getOutputStream());
+				clientSocket[neighbor] = new Socket(nodeNames[neighbor], nodePorts[neighbor]);
+				clientOStream[neighbor] = new DataOutputStream(clientSocket[neighbor].getOutputStream());
 				neighbor++;
 			}
 			catch (ConnectException e){
@@ -392,13 +388,13 @@ public class Maekawa {
 		 * is empty.
 		 */
 		while(true){
-			synchronized (outgoingMessages) {
-				while(!outgoingMessages.isEmpty()){
-					currentOutgoingMessege = outgoingMessages.poll();
+			synchronized (OutMsgs) {
+				while(!OutMsgs.isEmpty()){
+					currentOutgoingMessege = OutMsgs.poll();
 					messageParts = currentOutgoingMessege.split("#");
 					int receiverID = Integer.parseInt(messageParts[4].trim());
 					String messageToBeSent = messageParts[0]+ "#" + messageParts[1] + "#" + messageParts[2] + "#" + messageParts[3];
-					clientOutputStream[receiverID].writeUTF(messageToBeSent);
+					clientOStream[receiverID].writeUTF(messageToBeSent);
 				}
 			}
 		
@@ -411,9 +407,9 @@ public class Maekawa {
 	 * @return
 	 */
 	public synchronized boolean grantResponse(int senderID){
-		quorumResponse.put(senderID,true);
-		grantCounter++;		
-		if(grantCounter == quorumMembers.length){
+		QuorumReply.put(senderID,true);
+		NoOfGrants++;		
+		if(NoOfGrants == quorums.length){
 			csRequestGranted=true;
 			notifyAll();
 		}
@@ -478,7 +474,7 @@ public class Maekawa {
 	 * This is blocking call at node end waiting notifyAll() from grantResponse().
 	 */
 	synchronized void csEnter(){
-		synchronized(outgoingMessages){
+		synchronized(OutMsgs){
 			seqNumber++;
 			
 			boolean done=broadcastToQuorum("REQ", seqNumber);
@@ -490,7 +486,7 @@ public class Maekawa {
             e.printStackTrace();
         };
         
-        synchronized(outgoingMessages){
+        synchronized(OutMsgs){
         	csEnterVector[nodeId]++;
         	for(int i = 0;i< csEnterVector.length ; ++i)
         		csTestVector[i] = csEnterVector[i];
@@ -502,17 +498,17 @@ public class Maekawa {
 	 * all quorum members and initializing all related variables/ datastructures
 	 */
 	void csExit(){
-		int[] tempArray=null;
-		synchronized(outgoingMessages){
+		int[] MyArray=null;
+		synchronized(OutMsgs){
 			//broadcast release
 			seqNumber++;
 			csEnterVector[nodeId]++;
 			boolean done=broadcastToQuorum("REL", seqNumber);
-			grantCounter = 0;
+			NoOfGrants = 0;
 			csRequestGranted = false;
-			quorumResponse = new HashMap<Integer,Boolean>();
-			inqMessages = new LinkedList<String>();
-			tempArray = csEnterVector;
+			QuorumReply = new HashMap<Integer,Boolean>();
+			inqMsgs = new LinkedList<String>();
+			MyArray = csEnterVector;
 			for(int i = 0;i< csEnterVector.length ; ++i)
 				if(i!=nodeId&& csTestVector[i]!=csEnterVector[i])
 					res =false;
@@ -524,7 +520,7 @@ public class Maekawa {
 			}
 			
 		}
-		System.out.println("Exiting CS "+nodeId + " "+ Arrays.toString(tempArray)+" "+" DME::"+res);
+		System.out.println("Exiting CS "+nodeId + " "+ Arrays.toString(MyArray)+" "+" DME::"+res);
 	}
 	
 	/**
@@ -534,7 +530,7 @@ public class Maekawa {
 	 * @return
 	 */
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
-			for(String s : quorumMembers){
+			for(String s : quorums){
 				sendMessage(message, Integer.parseInt(s), currentSeqNumber);
 				
 			}
@@ -542,14 +538,14 @@ public class Maekawa {
 	}
 	
 	/**
-	 * function to generate message to be sent and put it into outgoingMessages queue
+	 * function to generate message to be sent and put it into OutMsgs queue
 	 * @param message
 	 * @param neighbor
 	 * @param currentSeqNumber
 	 */
 	public void sendMessage(String message, int neighbor, int currentSeqNumber){
 			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
-			outgoingMessages.add(messageToQueue);
+			OutMsgs.add(messageToQueue);
 	}
 	
 	/**
@@ -571,7 +567,7 @@ public class Maekawa {
 		for(int i =0 ; i < noOfReq; ++i ){
 			csEnter();
 			try {
-				Thread.sleep(new ExponentialRV(csExecTime).nextInt());
+				Thread.sleep(new ExpProbTime(csExecTime).NextNum());
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -581,7 +577,7 @@ public class Maekawa {
 			
 			try {
 				//if(difference>0)
-					Thread.sleep(new ExponentialRV(interReqDelay).nextInt());
+					Thread.sleep(new ExpProbTime(interReqDelay).NextNum());
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -619,7 +615,7 @@ public class Maekawa {
 			nodeNames[nodeIndex] = parts[1];
 			nodePorts[nodeIndex] = Integer.parseInt(parts[2]);
 		}		
-		object.quorumMembers = args[2].split("\\s+");
+		object.quorums = args[2].split("\\s+");
 		object.csExecTime = Integer.parseInt(args[3]);
 		object.interReqDelay = Integer.parseInt(args[4]);
 		object.noOfReq = Integer.parseInt(args[5].trim());
@@ -634,9 +630,9 @@ public class Maekawa {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		Maekawa.outgoingMessages = new LinkedList<String>();
-		object.inqMessages = new LinkedList<String>();
-		object.quorumResponse = new HashMap<Integer,Boolean>();
+		Maekawa.OutMsgs = new LinkedList<String>();
+		object.inqMsgs = new LinkedList<String>();
+		object.QuorumReply = new HashMap<Integer,Boolean>();
 		object.csEnterVector = new int[noOfNodes];
 		object.csTestVector = new int[noOfNodes];
 		object.Application();
