@@ -1,9 +1,4 @@
-/**
- * 
- * 	This program uses Maekawa Distributed Mutual Exclusion (DME) Protocol to ensure
- *  that each Critical Execution request is satisfied and mutual
- *  exclusion exists while a process is in critical section. 
- */
+
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
