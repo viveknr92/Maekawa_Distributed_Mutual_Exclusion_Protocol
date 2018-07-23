@@ -29,7 +29,6 @@ import java.util.Queue;
  */
 public class Maekawa {
 	
-	static MaekawaMsgHandler working;
 	String[] quorums;
 	int noOfNodes;
 	Socket[] clientSocket;
@@ -38,19 +37,19 @@ public class Maekawa {
 	int nodeId;
 	String[] nodeNames;
 	int[] nodePorts;
-	static Queue<String> OutMsgs;
+	Queue<String> OutMsgs;
 	Queue<String> inqMsgs;
 	String configFile;
 	int interReqDelay,csExecTime,noOfReq;
 	FileOutputStream out = null;
-	static Boolean isLocked = false;
-	static Integer NoOfGrants = 0;
+	Boolean isLocked = false;
+	Integer NoOfGrants = 0;
 	Comparator<String> OurQueue = new PriorityQ();
 	PriorityQueue<String> pendingRequests = new PriorityQueue<String>(10,OurQueue);
 	Integer[] lockedProcess = new Integer[2];
 	boolean InqSent = false;
 	HashMap<Integer,Boolean> QuorumReply;
-	public static Integer seqNumber = 0;
+	public Integer seqNumber = 0;
 	boolean csRequestGranted = false;
 	boolean messageOffered = false;
 	int[] csEnterVector;
@@ -67,7 +66,6 @@ public class Maekawa {
 			
 			ServerSocket serverSocketForNode;
 			Socket serverSocket=null;
-			working = new MaekawaMsgHandler();
 			try
 			{
 			serverSocketForNode = new ServerSocket(nodePorts[nodeId]);
@@ -82,7 +80,7 @@ public class Maekawa {
 				catch(IOException e){
 					
 				}
-				new clientConnections(serverSocket).start();
+				new clientConnections(serverSocket, this).start();
 			}
 		}
 		catch(IOException ex)
@@ -92,214 +90,12 @@ public class Maekawa {
 	}
 	
 	/**
-	 * This class is used to create persistent client connections through
-	 * multiple server threads. Each Thread is sharing one ProcessMessage
-	 * object to synchronize all server threads.
-	 * 
-	 */
-	class clientConnections extends Thread{
-		Socket clientConnected;
-		
-		public clientConnections(Socket clientConnected){
-			this.clientConnected=clientConnected;
-			
-		}
-		
-		public void run(){
-			InputStream inputStream = null;
-			DataInputStream reader = null;
-			String message = null;
-			try{
-				inputStream = clientConnected.getInputStream();
-				reader = new DataInputStream(new BufferedInputStream(inputStream));
-				
-			}
-			catch(IOException e){
-				e.printStackTrace();
-			}
-			while(true){
-				try{
-					while(reader.available()>0){
-						message = reader.readUTF();
-						synchronized (working) {
-							working.MsgHandling(message);
-						}
-					}
-				}
-				catch(EOFException e){
-					e.printStackTrace();
-					try {
-						reader.reset();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				catch(IOException e){
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-	
-	/**
 	 * This is actual Maekawa DME protocol algorithm implementation.
 	 * The object of this class is shared by each server thread to
 	 * synchronize DME for each server threads.
 	 * 
 	 */
-	class MaekawaMsgHandler{
 	
-		String message = null;
-		
-		public MaekawaMsgHandler(String message) {
-			this.message=message;
-		}
-		
-		public MaekawaMsgHandler() {
-			// TODO Auto-generated constructor stub
-		}
-
-		public void MsgHandling(String message){
-		
-		String[] messageParts,tempPendingQueueHead;
-		String pendingQueueHead;
-		
-		synchronized(OutMsgs){
-			if(message!=null){
-				messageParts = message.split("#");
-				int senderID = Integer.parseInt(messageParts[1].trim());
-				int seqNum = Integer.parseInt(messageParts[2].trim());
-				int[] newVector= fromString(messageParts[3].trim());
-				for (int i=0; i < newVector.length; i++){ 
-					if (newVector[i] >= csEnterVector[i])
-						csEnterVector[i] = newVector[i];
-					
-				}
-				if(seqNum > seqNumber)
-					seqNumber = seqNum;
-				seqNumber++;
-				switch(messageParts[0]){
-				/**
-				 * received message: 'Request' to access CS
-				 */
-				case "REQ":		
-					if(!isLocked){
-						lockedProcess[0]=senderID;
-						lockedProcess[1]=seqNum;
-						isLocked = true;
-						seqNumber++;
-						sendMessage("GRANT", senderID, seqNumber);
-					}else{
-						//push into pending priority queue based on time stamp.
-						messageOffered=pendingRequests.offer(senderID+" "+seqNum);
-						String s = pendingRequests.peek();
-						String[] parts = s.split(" ");
-						int topWaitingID = Integer.parseInt(parts[0].trim());
-						int topWaitingSeq = Integer.parseInt(parts[1].trim());
-						if(seqNum < lockedProcess[1] || (seqNum == lockedProcess[1] && senderID < lockedProcess[0])){
-							if(!InqSent){
-								seqNumber++;
-								sendMessage("INQ", lockedProcess[0],seqNumber);//sendInq
-								InqSent = true;
-							}
-							else if(topWaitingSeq < seqNum || topWaitingSeq == seqNum && topWaitingID < senderID ){
-								seqNumber++;
-								sendMessage("FAIL", senderID,seqNumber);//sendFail
-							}
-						}
-						else{
-							seqNumber++;
-							sendMessage("FAIL", senderID, seqNumber);//send fail
-						}
-						
-					}
-					break;
-					/**
-					 * received message: 'Grant' to access CS
-					 */
-				case "GRANT":
-					boolean done=grantResponse(senderID);
-					break;
-					/**
-					 * received message: 'Inquire' to release access to CS
-					 */
-				case "INQ":
-					if(QuorumReply.containsValue(false)){
-						seqNumber++;
-						sendMessage("YIELD", senderID, seqNumber);//send yield
-						QuorumReply.remove(senderID);
-						NoOfGrants--;
-					}else if((NoOfGrants < quorums.length )){
-						
-						inqMsgs.add(senderID+" "+seqNum);
-					}
-					break;
-					/**
-					 * received message: 'Fail' to access CS
-					 */
-				case "FAIL":						
-					//monitor the processes from which fail has been received
-					QuorumReply.put(senderID, false);
-					//Check if there is any in inq queue, if yes send yield, decrement NoOfGrants.
-					while(!inqMsgs.isEmpty()){
-						String m = inqMsgs.poll();
-						String[] p = m.split(" ");
-						seqNumber++;
-						sendMessage("YIELD", Integer.parseInt(p[0]), seqNumber);
-						QuorumReply.remove(Integer.parseInt(p[0]));
-						NoOfGrants--;
-					}
-					break;
-					/**
-					 * received message: 'Yield' to give back access of CS
-					 */
-				case "YIELD":
-					isLocked = false;
-					InqSent = false;
-					
-					messageOffered=pendingRequests.offer(lockedProcess[0]+" "+lockedProcess[1]);
-					pendingQueueHead = pendingRequests.peek();
-					if(pendingQueueHead==null){
-						lockedProcess[0]=null;
-						lockedProcess[1]=null;
-					}else if(pendingQueueHead!=null){
-						pendingQueueHead = pendingRequests.poll();
-						tempPendingQueueHead = pendingQueueHead.split(" ");
-						lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
-						lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
-						isLocked = true;
-						seqNumber++;
-						sendMessage("GRANT", Integer.parseInt(tempPendingQueueHead[0]), seqNumber);
-					}
-					break;
-					/**
-					 * received message: 'Release' after CS access
-					 */
-				case "REL":
-					isLocked = false;
-					InqSent = false;
-					pendingQueueHead = pendingRequests.peek();
-					if(pendingQueueHead==null){
-						lockedProcess[0]=null;
-						lockedProcess[1]=null;
-					}else if(pendingQueueHead!=null){
-						pendingQueueHead = pendingRequests.poll();
-						tempPendingQueueHead = pendingQueueHead.split(" ");
-						lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
-						lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
-						isLocked = true;
-						seqNumber++;
-						sendMessage("GRANT", Integer.parseInt(tempPendingQueueHead[0]), seqNumber);
-					}
-					break;
-				default:
-					break;						
-				}
-			}
-		}
-		}
-	
-	}
 	
 	/**
 	 * This client function is used to create single client thread.
@@ -376,7 +172,7 @@ public class Maekawa {
 	 * @param string
 	 * @return
 	 */
-	private static int[] fromString(String string) {
+	public static int[] fromString(String string) {
 	    String[] strings = string.replace("[", "").replace("]", "").split(", ");
 	    int result[] = new int[strings.length];
 	    for (int i = 0; i < result.length; i++) {

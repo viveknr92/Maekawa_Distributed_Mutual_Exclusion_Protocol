@@ -40,7 +40,7 @@ public class Main {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		Maekawa.OutMsgs = new LinkedList<String>();
+		object.OutMsgs = new LinkedList<String>();
 		object.inqMsgs = new LinkedList<String>();
 		object.QuorumReply = new HashMap<Integer,Boolean>();
 		object.csEnterVector = new int[object.noOfNodes];
