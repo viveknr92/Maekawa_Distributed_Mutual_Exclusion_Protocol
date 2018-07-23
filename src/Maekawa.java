@@ -1,6 +1,3 @@
-
-
-
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -50,13 +47,13 @@ public class Maekawa {
 	
 	static MaekawaMsgHandler working;
 	String[] quorums;
-	static int noOfNodes;
+	int noOfNodes;
 	Socket[] clientSocket;
 	DataOutputStream[] clientOStream;
 	DataInputStream[] serverInStream;
 	int nodeId;
-	static String[] nodeNames;
-	static int[] nodePorts;
+	String[] nodeNames;
+	int[] nodePorts;
 	static Queue<String> OutMsgs;
 	Queue<String> inqMsgs;
 	String configFile;
@@ -566,49 +563,4 @@ public class Maekawa {
 		}
 		System.out.println(nodeId + " is finished with all requests");
 	}
-	
-	
-	/**
-	 * Main of the class to parse all input arguments received on command line
-	 * and call main application once all parsed arguments are saved.
-	 * @param args
-	 */
-	public static void main(String args[]) {
-		
-		Maekawa object = new Maekawa();
-		if (args.length != 6) {
-            System.exit(0);
-            }
-		object.nodeId = Integer.parseInt(args[0]);
-		noOfNodes = args[1].split("#").length;
-		nodeNames = new String[noOfNodes];
-		nodePorts = new int[noOfNodes];
-		for (String s : args[1].split("#") ) {
-			String[] parts = s.split("\\s+");
-			int nodeIndex = Integer.parseInt(parts[0]);
-			nodeNames[nodeIndex] = parts[1];
-			nodePorts[nodeIndex] = Integer.parseInt(parts[2]);
-		}		
-		object.quorums = args[2].split("\\s+");
-		object.csExecTime = Integer.parseInt(args[3]);
-		object.interReqDelay = Integer.parseInt(args[4]);
-		object.noOfReq = Integer.parseInt(args[5].trim());
-		object.configFile = "output";
-		try {
-			object.out = new FileOutputStream(object.configFile+".out");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		try {
-			object.out = new FileOutputStream("logs-"+object.nodeId+".out");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		Maekawa.OutMsgs = new LinkedList<String>();
-		object.inqMsgs = new LinkedList<String>();
-		object.QuorumReply = new HashMap<Integer,Boolean>();
-		object.csEnterVector = new int[noOfNodes];
-		object.csTestVector = new int[noOfNodes];
-		object.Application();
-	}   
 }
