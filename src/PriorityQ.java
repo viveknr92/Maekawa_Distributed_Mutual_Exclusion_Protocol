@@ -5,7 +5,7 @@ import java.util.Comparator;
 	 * is prioritized based on both logical clock and process ID (Lamport Total-Ordering)
 	 * 
  */
-//
+
 
 public class PriorityQ implements Comparator<String> {
 	 

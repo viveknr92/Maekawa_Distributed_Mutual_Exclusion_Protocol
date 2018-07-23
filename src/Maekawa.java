@@ -16,22 +16,6 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-/**
- * class to generate random number for exponential distribution
- * of csExecution time & interRequest time.
- *
- */
-class ExpProbTime{
-	protected double var = 1.0;
-	public ExpProbTime(double var){
-		this.var = var;
-	}
-	
-	public int NextNum(){
-		return (int)(-var * Math.log(Math.random()));
-	}
-	
-}
 
 /**
  * Main class which handles input arguments at command line
