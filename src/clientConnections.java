@@ -11,47 +11,47 @@ import java.net.Socket;
 	 * object to synchronize all server threads.
 	 * 
 	 */
-	class clientConnections extends Thread{
-		Socket clientConnected;
-		MaekawaMsgHandler working;
-		
-		public clientConnections(Socket clientConnected, Maekawa object){
-			this.clientConnected=clientConnected;
-			this.working = new MaekawaMsgHandler(object);
+public class clientConnections extends Thread{
+	Socket clientConnected;
+	MaekawaMsgHandler working;
+	
+	public clientConnections(Socket clientConnected, Maekawa object){
+		this.clientConnected=clientConnected;
+		this.working = new MaekawaMsgHandler(object);
+	}
+	
+	public void run(){
+		InputStream inputStream = null;
+		DataInputStream reader = null;
+		String message = null;
+		try{
+			inputStream = clientConnected.getInputStream();
+			reader = new DataInputStream(new BufferedInputStream(inputStream));
+			
 		}
-		
-		public void run(){
-			InputStream inputStream = null;
-			DataInputStream reader = null;
-			String message = null;
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		while(true){
 			try{
-				inputStream = clientConnected.getInputStream();
-				reader = new DataInputStream(new BufferedInputStream(inputStream));
-				
+				while(reader.available()>0){
+					message = reader.readUTF();
+					synchronized (working) {
+						working.MsgHandling(message);
+					}
+				}
+			}
+			catch(EOFException e){
+				e.printStackTrace();
+				try {
+					reader.reset();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 			catch(IOException e){
 				e.printStackTrace();
 			}
-			while(true){
-				try{
-					while(reader.available()>0){
-						message = reader.readUTF();
-						synchronized (working) {
-							working.MsgHandling(message);
-						}
-					}
-				}
-				catch(EOFException e){
-					e.printStackTrace();
-					try {
-						reader.reset();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
-				catch(IOException e){
-					e.printStackTrace();
-				}
-			}
 		}
 	}
+}
