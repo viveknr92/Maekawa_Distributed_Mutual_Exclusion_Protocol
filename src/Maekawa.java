@@ -182,43 +182,6 @@ public class Maekawa {
 	  }
 	
 	/**
-	 * Run server and then run client thread after some delay.
-	 * 
-	 */
-	class MutualExclusion {
-		
-		public MutualExclusion(){
-			
-			Thread incomingMessageThread = new Thread(new Runnable(){
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					runServer();
-				}
-			});
-			incomingMessageThread.start();
-			try {
-				Thread.currentThread();
-				Thread.sleep(30);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
-			
-			Thread outgoingMessageThread = new Thread(new Runnable(){
-				@Override
-				public void run() {
-					try {
-						runClient();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			});
-			outgoingMessageThread.start();
-		}
-	}
-	
-	/**
 	 * function to generate all Critical Section (CS) enter
 	 * requests through broadcast to quorum members
 	 * and wait until all requests are satisfied.
@@ -306,7 +269,7 @@ public class Maekawa {
 	 * Note that csEnter() is blocking call.
 	 */
 	public void Application (){
-		MutualExclusion me = new MutualExclusion();
+		MutualExclusion me = new MutualExclusion(this);
 		
 		try {
 			Thread.currentThread();
