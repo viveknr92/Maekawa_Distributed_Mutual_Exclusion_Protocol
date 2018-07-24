@@ -228,7 +228,7 @@ public class Maekawa {
 		synchronized(OutMsgs){
 			seqNumber++;
 			
-			boolean done=broadcastToQuorum("request", seqNumber);
+			boolean done=broadcastToQuorum("REQ", seqNumber);
 		}
 			
 		try {
@@ -254,7 +254,7 @@ public class Maekawa {
 			//broadcast release
 			seqNumber++;
 			csEnterVector[nodeId]++;
-			boolean done=broadcastToQuorum("release", seqNumber);
+			boolean done=broadcastToQuorum("REL", seqNumber);
 			NoOfGrants = 0;
 			csRequestGranted = false;
 			QuorumReply = new HashMap<Integer,Boolean>();
