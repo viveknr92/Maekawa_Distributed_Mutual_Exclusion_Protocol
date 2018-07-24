@@ -21,47 +21,47 @@ public class MaekawaMsgHandler{
 			if(message!=null){
 				messageParts = message.split("#");
 				int senderID = Integer.parseInt(messageParts[1].trim());
-				int seqNum = Integer.parseInt(messageParts[2].trim());
+				int scalar = Integer.parseInt(messageParts[2].trim());
 				int[] newVector= object.fromString(messageParts[3].trim());
 				for (int i=0; i < newVector.length; i++){ 
 					if (newVector[i] >= object.csEnterVector[i])
 						object.csEnterVector[i] = newVector[i];
 					
 				}
-				if(seqNum > object.seqNumber)
-					object.seqNumber = seqNum;
-				object.seqNumber++;
+				if(scalar > object.timeStamp)
+					object.timeStamp = scalar;
+				object.timeStamp++;
 				/**
 				 * received message: 'Request' to access CS
 				 */
 				if(messageParts[0].equals("request")){	
 					if(!object.isLocked){
 						object.lockedProcess[0]=senderID;
-						object.lockedProcess[1]=seqNum;
+						object.lockedProcess[1]=scalar;
 						object.isLocked = true;
-						object.seqNumber++;
-						object.sendMessage("lock", senderID, object.seqNumber);
+						object.timeStamp++;
+						object.sendMessage("lock", senderID, object.timeStamp);
 					}else{
 						//push into pending priority queue based on time stamp.
-						object.messageOffered=object.pendingRequests.offer(senderID+" "+seqNum);
+						object.messageOffered=object.pendingRequests.offer(senderID+" "+scalar);
 						String s = object.pendingRequests.peek();
 						String[] parts = s.split(" ");
 						int topWaitingID = Integer.parseInt(parts[0].trim());
 						int topWaitingSeq = Integer.parseInt(parts[1].trim());
-						if(seqNum < object.lockedProcess[1] || (seqNum == object.lockedProcess[1] && senderID < object.lockedProcess[0])){
+						if(scalar < object.lockedProcess[1] || (scalar == object.lockedProcess[1] && senderID < object.lockedProcess[0])){
 							if(!object.InqSent){
-								object.seqNumber++;
-								object.sendMessage("inquire", object.lockedProcess[0],object.seqNumber);//sendInq
+								object.timeStamp++;
+								object.sendMessage("inquire", object.lockedProcess[0],object.timeStamp);//sendInq
 								object.InqSent = true;
 							}
-							else if(topWaitingSeq < seqNum || topWaitingSeq == seqNum && topWaitingID < senderID ){
-								object.seqNumber++;
-								object.sendMessage("fail", senderID,object.seqNumber);//sendFail
+							else if(topWaitingSeq < scalar || topWaitingSeq == scalar && topWaitingID < senderID ){
+								object.timeStamp++;
+								object.sendMessage("fail", senderID,object.timeStamp);//sendFail
 							}
 						}
 						else{
-							object.seqNumber++;
-							object.sendMessage("fail", senderID, object.seqNumber);//send fail
+							object.timeStamp++;
+							object.sendMessage("fail", senderID, object.timeStamp);//send fail
 						}
 						
 					}
@@ -78,13 +78,13 @@ public class MaekawaMsgHandler{
 					 */
 				else if(messageParts[0].equals("inquire")){
 					if(object.QuorumReply.containsValue(false)){
-						object.seqNumber++;
-						object.sendMessage("yield", senderID, object.seqNumber);//send yield
+						object.timeStamp++;
+						object.sendMessage("yield", senderID, object.timeStamp);//send yield
 						object.QuorumReply.remove(senderID);
 						object.NoOfGrants--;
 					}else if((object.NoOfGrants < object.quorums.length )){
 						
-						object.inqMsgs.add(senderID+" "+seqNum);
+						object.inqMsgs.add(senderID+" "+scalar);
 					}
 					
 				}
@@ -98,8 +98,8 @@ public class MaekawaMsgHandler{
 					while(!object.inqMsgs.isEmpty()){
 						String m = object.inqMsgs.poll();
 						String[] p = m.split(" ");
-						object.seqNumber++;
-						object.sendMessage("yield", Integer.parseInt(p[0]), object.seqNumber);
+						object.timeStamp++;
+						object.sendMessage("yield", Integer.parseInt(p[0]), object.timeStamp);
 						object.QuorumReply.remove(Integer.parseInt(p[0]));
 						object.NoOfGrants--;
 					}
@@ -123,8 +123,8 @@ public class MaekawaMsgHandler{
 						object.lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
 						object.lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
 						object.isLocked = true;
-						object.seqNumber++;
-						object.sendMessage("lock", Integer.parseInt(tempPendingQueueHead[0]), object.seqNumber);
+						object.timeStamp++;
+						object.sendMessage("lock", Integer.parseInt(tempPendingQueueHead[0]), object.timeStamp);
 					}
 				}
 					/**
@@ -143,8 +143,8 @@ public class MaekawaMsgHandler{
 						object.lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
 						object.lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
 						object.isLocked = true;
-						object.seqNumber++;
-						object.sendMessage("lock", Integer.parseInt(tempPendingQueueHead[0]), object.seqNumber);
+						object.timeStamp++;
+						object.sendMessage("lock", Integer.parseInt(tempPendingQueueHead[0]), object.timeStamp);
 					}
 				}	
 			}

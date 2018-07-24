@@ -49,7 +49,7 @@ public class Maekawa {
 	Integer[] lockedProcess = new Integer[2];
 	boolean InqSent = false;
 	HashMap<Integer,Boolean> QuorumReply;
-	public Integer seqNumber = 0;
+	public Integer timeStamp = 0;
 	boolean csRequestGranted = false;
 	boolean messageOffered = false;
 	int[] csEnterVector;
@@ -226,9 +226,9 @@ public class Maekawa {
 	 */
 	synchronized void csEnter(){
 		synchronized(OutMsgs){
-			seqNumber++;
+			timeStamp++;
 			
-			boolean done=broadcastToQuorum("request", seqNumber);
+			boolean done=broadcastToQuorum("request", timeStamp);
 		}
 			
 		try {
@@ -252,9 +252,9 @@ public class Maekawa {
 		int[] MyArray=null;
 		synchronized(OutMsgs){
 			//broadcast release
-			seqNumber++;
+			timeStamp++;
 			csEnterVector[nodeId]++;
-			boolean done=broadcastToQuorum("release", seqNumber);
+			boolean done=broadcastToQuorum("release", timeStamp);
 			NoOfGrants = 0;
 			csRequestGranted = false;
 			QuorumReply = new HashMap<Integer,Boolean>();
