@@ -17,16 +17,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 
-/**
- * Main class which handles input arguments at command line
- * and executes DME program with help of persistent client server connection
- * where server processes all incoming messages and adds response to message
- * queue which is accessed by client thread to send message of respective
- * outgoingStream. Initial request is created through broadcast using client thread
- * and server waits for accept() and create new server thread on each socket.accept().
- * This is to maintain persistent connection for every client request.  
- *
- */
 public class Mutex_Protocol {
 	
 	String[] quorums;
@@ -89,22 +79,6 @@ public class Mutex_Protocol {
 		}
 	}
 	
-	/**
-	 * This is actual Maekawa DME protocol algorithm implementation.
-	 * The object of this class is shared by each server thread to
-	 * synchronize DME for each server threads.
-	 * 
-	 */
-	
-	
-	/**
-	 * This client function is used to create single client thread.
-	 * This client thread will first create socket connection and
-	 * outputStream for each socket and connects to each possible server
-	 * and saves these connections to use same outputStream each time for
-	 * same server connection.
-	 * @throws IOException
-	 */
 	public void runClient() throws IOException{
 		clientSocket = new Socket[noOfNodes];
 		clientOStream = new DataOutputStream[noOfNodes];
@@ -133,11 +107,7 @@ public class Mutex_Protocol {
 			}
 		}
 		
-		/**
-		 * pick each message popped from outgoingMessage queue
-		 * and put into respective outgoingStream until queue
-		 * is empty.
-		 */
+
 		while(true){
 			synchronized (sentMsgQueue) {
 				while(!sentMsgQueue.isEmpty()){
@@ -152,11 +122,6 @@ public class Mutex_Protocol {
 		}
 	}
 	
-	/**
-	 * to check if node has received all grants to enter CS
-	 * @param senderID
-	 * @return
-	 */
 	public synchronized boolean grantLock(int senderID){
 		hasReceivedFailed.put(senderID,true);
 		NumLocks++;		
@@ -166,12 +131,7 @@ public class Mutex_Protocol {
 		}
 		return true;
 	}
-	
-	/**
-	 * convert String array to integer array
-	 * @param string
-	 * @return
-	 */
+
 	public static int[] fromString(String string) {
 	    String[] strings = string.replace("[", "").replace("]", "").split(", ");
 	    int result[] = new int[strings.length];
@@ -181,10 +141,7 @@ public class Mutex_Protocol {
 	    return result;
 	  }
 	
-	/**
-	 * Run server and then run client thread after some delay.
-	 * 
-	 */
+
 	class MutualExclusion {
 		
 		public MutualExclusion(){
@@ -192,7 +149,6 @@ public class Mutex_Protocol {
 			Thread incomingMessageThread = new Thread(new Runnable(){
 				@Override
 				public void run() {
-					// TODO Auto-generated method stub
 					runServer();
 				}
 			});
@@ -218,12 +174,7 @@ public class Mutex_Protocol {
 		}
 	}
 	
-	/**
-	 * function to generate all Critical Section (CS) enter
-	 * requests through broadcast to quorum members
-	 * and wait until all requests are satisfied.
-	 * This is blocking call at node end waiting notifyAll() from grantLock().
-	 */
+
 	synchronized void csEnter(){
 		synchronized(sentMsgQueue){
 			timeStamp++;
@@ -243,15 +194,10 @@ public class Mutex_Protocol {
         		csTestVector[i] = csEnterVector[i];
         }
 	}
-	
-	/**
-	 * function to release CS by sending broadcast message to
-	 * all quorum members and initializing all related variables/ datastructures
-	 */
+
 	void csExit(){
 		int[] MyArray=null;
 		synchronized(sentMsgQueue){
-			//broadcast release
 			timeStamp++;
 			csEnterVector[nodeId]++;
 			boolean done=broadcastToQuorum("release", timeStamp);
@@ -265,7 +211,7 @@ public class Mutex_Protocol {
 					res =false;
 			try {
 				out.write((Arrays.toString(csEnterVector)+"\n").getBytes());
-				//out.close();
+			
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -274,13 +220,7 @@ public class Mutex_Protocol {
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
 		System.out.println();
 	}
-	
-	/**
-	 * function to generate all broadcast messages
-	 * @param message
-	 * @param currentSeqNumber
-	 * @return
-	 */
+
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
 			for(String s : quorums){
 				sendMessage(message, Integer.parseInt(s), currentSeqNumber);
@@ -288,24 +228,12 @@ public class Mutex_Protocol {
 			}
 		return true;
 	}
-	
-	/**
-	 * function to generate message to be sent and put it into sentMsgQueue queue
-	 * @param message
-	 * @param neighbor
-	 * @param currentSeqNumber
-	 */
+
 	public void sendMessage(String message, int neighbor, int currentSeqNumber){
 			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
 			sentMsgQueue.add(messageToQueue);
 	}
 	
-	/**
-	 * Actual application module to call server to make it up and running and
-	 * then create CS enter broadcast requests through csEnter() and
-	 * release requests through csExit() calls
-	 * Note that csEnter() is blocking call.
-	 */
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
 		
@@ -328,16 +256,15 @@ public class Mutex_Protocol {
 			csExit();
 			
 			try {
-				//if(difference>0)
+		
 					Thread.sleep(new ExpProbTime(interReqDelay).RandomNum());
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+			
 				e.printStackTrace();
 			}
 		}
 			
 		try {
-			//out.write(logs.getBytes());
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();

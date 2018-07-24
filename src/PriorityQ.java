@@ -1,11 +1,5 @@
 import java.util.Comparator;
 
-/**
-	 * Comparator to manage PriorityQueue.add() so that each request
-	 * is prioritized based on both logical clock and process ID (Lamport Total-Ordering)
-	 * 
- */
-
 
 public class PriorityQ implements Comparator<String> {
 	 

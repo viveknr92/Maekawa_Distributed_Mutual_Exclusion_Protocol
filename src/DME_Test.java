@@ -2,8 +2,7 @@
  * @author 
  * @since 
  * @version 1.0
- * This is tester code to check if mutual execution persists in given
- * output file set.
+
  */
 
 import java.io.BufferedReader;
@@ -11,20 +10,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-/**
- * Test class which accepts two command line arguments: number of nodes and number of requests
- * and checks whether mutual exclusion is achieved. 
- *
- */
+
 public class DME_Test {
 	int noOfNodes, noOfRequests;
 	BufferedReader[] files;
 	int[][] vectors;
-	/**
-	 * Method to convert string to integer array
-	 * @param string
-	 * @return
-	 */
+
 	private static int[] fromString(String string) {
 	    String[] strings = string.replace("[", "").replace("]", "").split(", ");
 	    int result[] = new int[strings.length];
@@ -34,13 +25,7 @@ public class DME_Test {
 	    return result;
 	  }
 	
-	/**
-	 * Method to check if the two arrays (vectors) are comparable or not using vector clock.
-	 * This helps to conclude whether the processes executed critical section in concurrence or not.
-	 * @param v First vector to compare
-	 * @param w Second vector to compare
-	 * @return
-	 */
+
 	static boolean	isDME_Overlap(int v[], int w[])
 	{
 		boolean greater=false, less=false;

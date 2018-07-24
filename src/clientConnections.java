@@ -5,12 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 
-/**
-	 * This class is used to create persistent client connections through
-	 * multiple server threads. Each Thread is sharing one ProcessMessage
-	 * object to synchronize all server threads.
-	 * 
-	 */
 public class clientConnections extends Thread{
 	Socket clientConnected;
 	Mutex_Protocol_MsgHandler working;
