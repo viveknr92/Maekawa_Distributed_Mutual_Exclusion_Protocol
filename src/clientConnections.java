@@ -13,11 +13,11 @@ import java.net.Socket;
 	 */
 public class clientConnections extends Thread{
 	Socket clientConnected;
-	MaekawaMsgHandler working;
+	Mutex_Protocol_MsgHandler working;
 	
-	public clientConnections(Socket clientConnected, Maekawa object){
+	public clientConnections(Socket clientConnected, Mutex_Protocol object){
 		this.clientConnected=clientConnected;
-		this.working = new MaekawaMsgHandler(object);
+		this.working = new Mutex_Protocol_MsgHandler(object);
 	}
 	
 	public void run(){

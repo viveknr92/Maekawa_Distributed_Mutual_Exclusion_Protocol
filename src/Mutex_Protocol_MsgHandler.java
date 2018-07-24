@@ -1,14 +1,14 @@
 
-public class MaekawaMsgHandler{
+public class Mutex_Protocol_MsgHandler{
 	
 		String message = null;
-		Maekawa object;
+		Mutex_Protocol object;
 		
-		public MaekawaMsgHandler(String message,Maekawa object) {
+		public Mutex_Protocol_MsgHandler(String message,Mutex_Protocol object) {
 			this.message=message;
 		}
 		
-		public MaekawaMsgHandler(Maekawa object) {
+		public Mutex_Protocol_MsgHandler(Mutex_Protocol object) {
 			this.object = object;
 		}
 

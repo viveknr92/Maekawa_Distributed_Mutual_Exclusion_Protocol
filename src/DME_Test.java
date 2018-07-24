@@ -16,7 +16,7 @@ import java.io.InputStreamReader;
  * and checks whether mutual exclusion is achieved. 
  *
  */
-public class MutexTester {
+public class DME_Test {
 	int noOfNodes, noOfRequests;
 	BufferedReader[] files;
 	int[][] vectors;
@@ -41,7 +41,7 @@ public class MutexTester {
 	 * @param w Second vector to compare
 	 * @return
 	 */
-	static boolean	isconcurrent(int v[], int w[])
+	static boolean	isDME_Overlap(int v[], int w[])
 	{
 		boolean greater=false, less=false;
 
@@ -57,7 +57,7 @@ public class MutexTester {
 	}
 	public static void main(String args[]) throws IOException {
 		
-		MutexTester object = new MutexTester();
+		DME_Test object = new DME_Test();
 		if (args.length != 2) {
             System.exit(0);
             }
@@ -80,7 +80,7 @@ public class MutexTester {
 			}
 			for(int i =0;i<object.noOfNodes&!concurrent;++i){
 				for(int k =i+1;k<object.noOfNodes&!concurrent;++k){
-					concurrent=isconcurrent(object.vectors[i], object.vectors[k]);
+					concurrent=isDME_Overlap(object.vectors[i], object.vectors[k]);
 				}				
 			}			
 		}

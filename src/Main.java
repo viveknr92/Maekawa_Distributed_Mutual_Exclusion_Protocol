@@ -11,7 +11,7 @@ public class Main {
 	 */
 	public static void main(String args[]) {
 		
-		Maekawa object = new Maekawa();
+		Mutex_Protocol object = new Mutex_Protocol();
 		if (args.length != 6) {
             System.exit(0);
             }

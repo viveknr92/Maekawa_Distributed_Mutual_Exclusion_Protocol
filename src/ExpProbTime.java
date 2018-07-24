@@ -9,7 +9,7 @@ public class ExpProbTime{
 		this.var = var;
 	}
 	
-	public int NextNum(){
+	public int RandomNum(){
 		return (int)(-var * Math.log(Math.random()));
 	}
 	

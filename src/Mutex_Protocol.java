@@ -27,7 +27,7 @@ import java.util.Queue;
  * This is to maintain persistent connection for every client request.  
  *
  */
-public class Maekawa {
+public class Mutex_Protocol {
 	
 	String[] quorums;
 	int noOfNodes;
@@ -236,7 +236,7 @@ public class Maekawa {
         } catch (InterruptedException e) {
             e.printStackTrace();
         };
-        
+        System.out.println("Node: " + nodeId + " Enter CS ");
         synchronized(sentMsgQueue){
         	csEnterVector[nodeId]++;
         	for(int i = 0;i< csEnterVector.length ; ++i)
@@ -271,7 +271,8 @@ public class Maekawa {
 			}
 			
 		}
-		System.out.println("Exiting CS "+nodeId + " "+ Arrays.toString(MyArray)+" "+" DME::"+res);
+		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
+		System.out.println();
 	}
 	
 	/**
@@ -318,7 +319,7 @@ public class Maekawa {
 		for(int i =0 ; i < noOfReq; ++i ){
 			csEnter();
 			try {
-				Thread.sleep(new ExpProbTime(csExecTime).NextNum());
+				Thread.sleep(new ExpProbTime(csExecTime).RandomNum());
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -328,7 +329,7 @@ public class Maekawa {
 			
 			try {
 				//if(difference>0)
-					Thread.sleep(new ExpProbTime(interReqDelay).NextNum());
+					Thread.sleep(new ExpProbTime(interReqDelay).RandomNum());
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
