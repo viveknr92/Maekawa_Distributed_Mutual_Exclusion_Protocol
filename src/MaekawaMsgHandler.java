@@ -31,11 +31,10 @@ public class MaekawaMsgHandler{
 				if(seqNum > object.seqNumber)
 					object.seqNumber = seqNum;
 				object.seqNumber++;
-				switch(messageParts[0]){
 				/**
 				 * received message: 'Request' to access CS
 				 */
-				case "REQ":		
+				if(messageParts[0].equals("REQ")){	
 					if(!object.isLocked){
 						object.lockedProcess[0]=senderID;
 						object.lockedProcess[1]=seqNum;
@@ -66,17 +65,18 @@ public class MaekawaMsgHandler{
 						}
 						
 					}
-					break;
+				}
 					/**
 					 * received message: 'Grant' to access CS
 					 */
-				case "GRANT":
+				else if(messageParts[0].equals("GRANT")){
 					boolean done=object.grantResponse(senderID);
-					break;
+					
+				}
 					/**
 					 * received message: 'Inquire' to release access to CS
 					 */
-				case "INQ":
+				else if(messageParts[0].equals("INQ")){
 					if(object.QuorumReply.containsValue(false)){
 						object.seqNumber++;
 						object.sendMessage("YIELD", senderID, object.seqNumber);//send yield
@@ -86,11 +86,12 @@ public class MaekawaMsgHandler{
 						
 						object.inqMsgs.add(senderID+" "+seqNum);
 					}
-					break;
+					
+				}
 					/**
 					 * received message: 'Fail' to access CS
 					 */
-				case "FAIL":						
+				else if(messageParts[0].equals("FAIL")){						
 					//monitor the processes from which fail has been received
 					object.QuorumReply.put(senderID, false);
 					//Check if there is any in inq queue, if yes send yield, decrement NoOfGrants.
@@ -102,11 +103,12 @@ public class MaekawaMsgHandler{
 						object.QuorumReply.remove(Integer.parseInt(p[0]));
 						object.NoOfGrants--;
 					}
-					break;
+				
+				}
 					/**
 					 * received message: 'Yield' to give back access of CS
 					 */
-				case "YIELD":
+				else if(messageParts[0].equals("YIELD")){
 					object.isLocked = false;
 					object.InqSent = false;
 					
@@ -124,11 +126,11 @@ public class MaekawaMsgHandler{
 						object.seqNumber++;
 						object.sendMessage("GRANT", Integer.parseInt(tempPendingQueueHead[0]), object.seqNumber);
 					}
-					break;
+				}
 					/**
 					 * received message: 'Release' after CS access
 					 */
-				case "REL":
+				else if(messageParts[0].equals("REL")){
 					object.isLocked = false;
 					object.InqSent = false;
 					pendingQueueHead = object.pendingRequests.peek();
@@ -144,12 +146,9 @@ public class MaekawaMsgHandler{
 						object.seqNumber++;
 						object.sendMessage("GRANT", Integer.parseInt(tempPendingQueueHead[0]), object.seqNumber);
 					}
-					break;
-				default:
-					break;						
-				}
+				}	
 			}
-		}
-		}
+		 }
+	  }
 	
 	}
