@@ -37,21 +37,21 @@ public class Maekawa {
 	int nodeId;
 	String[] nodeNames;
 	int[] nodePorts;
-	Queue<String> OutMsgs;
+	Queue<String> sentMsgQueue;
 	Queue<String> inqMsgs;
 	String configFile;
 	int interReqDelay,csExecTime,noOfReq;
 	FileOutputStream out = null;
 	Boolean isLocked = false;
-	Integer NoOfGrants = 0;
+	Integer NumLocks = 0;
 	Comparator<String> OurQueue = new PriorityQ();
-	PriorityQueue<String> pendingRequests = new PriorityQueue<String>(10,OurQueue);
+	PriorityQueue<String> requestQueue = new PriorityQueue<String>(10,OurQueue);
 	Integer[] lockedProcess = new Integer[2];
-	boolean InqSent = false;
-	HashMap<Integer,Boolean> QuorumReply;
+	boolean isInqSent = false;
+	HashMap<Integer,Boolean> hasReceivedFailed;
 	public Integer timeStamp = 0;
 	boolean csRequestGranted = false;
-	boolean messageOffered = false;
+	boolean msgSent = false;
 	int[] csEnterVector;
 	int[] csTestVector;
 	boolean res=true;
@@ -139,9 +139,9 @@ public class Maekawa {
 		 * is empty.
 		 */
 		while(true){
-			synchronized (OutMsgs) {
-				while(!OutMsgs.isEmpty()){
-					currentOutgoingMessege = OutMsgs.poll();
+			synchronized (sentMsgQueue) {
+				while(!sentMsgQueue.isEmpty()){
+					currentOutgoingMessege = sentMsgQueue.poll();
 					messageParts = currentOutgoingMessege.split("#");
 					int receiverID = Integer.parseInt(messageParts[4].trim());
 					String messageToBeSent = messageParts[0]+ "#" + messageParts[1] + "#" + messageParts[2] + "#" + messageParts[3];
@@ -157,10 +157,10 @@ public class Maekawa {
 	 * @param senderID
 	 * @return
 	 */
-	public synchronized boolean grantResponse(int senderID){
-		QuorumReply.put(senderID,true);
-		NoOfGrants++;		
-		if(NoOfGrants == quorums.length){
+	public synchronized boolean grantLock(int senderID){
+		hasReceivedFailed.put(senderID,true);
+		NumLocks++;		
+		if(NumLocks == quorums.length){
 			csRequestGranted=true;
 			notifyAll();
 		}
@@ -222,10 +222,10 @@ public class Maekawa {
 	 * function to generate all Critical Section (CS) enter
 	 * requests through broadcast to quorum members
 	 * and wait until all requests are satisfied.
-	 * This is blocking call at node end waiting notifyAll() from grantResponse().
+	 * This is blocking call at node end waiting notifyAll() from grantLock().
 	 */
 	synchronized void csEnter(){
-		synchronized(OutMsgs){
+		synchronized(sentMsgQueue){
 			timeStamp++;
 			
 			boolean done=broadcastToQuorum("request", timeStamp);
@@ -237,7 +237,7 @@ public class Maekawa {
             e.printStackTrace();
         };
         
-        synchronized(OutMsgs){
+        synchronized(sentMsgQueue){
         	csEnterVector[nodeId]++;
         	for(int i = 0;i< csEnterVector.length ; ++i)
         		csTestVector[i] = csEnterVector[i];
@@ -250,14 +250,14 @@ public class Maekawa {
 	 */
 	void csExit(){
 		int[] MyArray=null;
-		synchronized(OutMsgs){
+		synchronized(sentMsgQueue){
 			//broadcast release
 			timeStamp++;
 			csEnterVector[nodeId]++;
 			boolean done=broadcastToQuorum("release", timeStamp);
-			NoOfGrants = 0;
+			NumLocks = 0;
 			csRequestGranted = false;
-			QuorumReply = new HashMap<Integer,Boolean>();
+			hasReceivedFailed = new HashMap<Integer,Boolean>();
 			inqMsgs = new LinkedList<String>();
 			MyArray = csEnterVector;
 			for(int i = 0;i< csEnterVector.length ; ++i)
@@ -289,14 +289,14 @@ public class Maekawa {
 	}
 	
 	/**
-	 * function to generate message to be sent and put it into OutMsgs queue
+	 * function to generate message to be sent and put it into sentMsgQueue queue
 	 * @param message
 	 * @param neighbor
 	 * @param currentSeqNumber
 	 */
 	public void sendMessage(String message, int neighbor, int currentSeqNumber){
 			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
-			OutMsgs.add(messageToQueue);
+			sentMsgQueue.add(messageToQueue);
 	}
 	
 	/**
