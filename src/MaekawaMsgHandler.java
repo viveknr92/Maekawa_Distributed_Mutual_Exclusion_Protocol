@@ -4,22 +4,22 @@ public class MaekawaMsgHandler{
 		String message = null;
 		Maekawa object;
 		
-		public MaekawaMsgHandler(String message,Maekawa object) {
-			this.message=message;
-		}
+//		public MaekawaMsgHandler(String message,Maekawa object) {
+//			this.message=message;
+//		}
 		
 		public MaekawaMsgHandler(Maekawa object) {
 			this.object = object;
 		}
 
-		public void MsgHandling(String message){
+		public void MsgHandling(Message message){
 		
 		String[] messageParts,tempPendingQueueHead;
-		String pendingQueueHead;
+		Message pendingQueueHead;
 		
 		synchronized(object.OutMsgs){
 			if(message!=null){
-				messageParts = message.split("#");
+				messageParts = message.msgString.split("#");
 				int senderID = Integer.parseInt(messageParts[1].trim());
 				int seqNum = Integer.parseInt(messageParts[2].trim());
 				int[] newVector= object.fromString(messageParts[3].trim());
@@ -44,9 +44,11 @@ public class MaekawaMsgHandler{
 						object.sendMessage("GRANT", senderID, object.seqNumber);
 					}else{
 						//push into pending priority queue based on time stamp.
-						object.messageOffered=object.pendingRequests.offer(senderID+" "+seqNum);
-						String s = object.pendingRequests.peek();
-						String[] parts = s.split(" ");
+						//TODO
+						Message m = new Message("", senderID, -1, seqNum, null);
+						object.messageOffered=object.pendingRequests.offer(m);
+						Message s = object.pendingRequests.peek();
+						String[] parts = s.msgString.split(" ");
 						int topWaitingID = Integer.parseInt(parts[0].trim());
 						int topWaitingSeq = Integer.parseInt(parts[1].trim());
 						if(seqNum < object.lockedProcess[1] || (seqNum == object.lockedProcess[1] && senderID < object.lockedProcess[0])){
@@ -83,8 +85,8 @@ public class MaekawaMsgHandler{
 						object.QuorumReply.remove(senderID);
 						object.NoOfGrants--;
 					}else if((object.NoOfGrants < object.quorums.length )){
-						
-						object.inqMsgs.add(senderID+" "+seqNum);
+						Message m = new Message("", senderID, -1, seqNum, null);
+						object.inqMsgs.add(m);
 					}
 					break;
 					/**
@@ -95,8 +97,8 @@ public class MaekawaMsgHandler{
 					object.QuorumReply.put(senderID, false);
 					//Check if there is any in inq queue, if yes send yield, decrement NoOfGrants.
 					while(!object.inqMsgs.isEmpty()){
-						String m = object.inqMsgs.poll();
-						String[] p = m.split(" ");
+						Message m = object.inqMsgs.poll();
+						String[] p = m.msgString.split(" ");
 						object.seqNumber++;
 						object.sendMessage("YIELD", Integer.parseInt(p[0]), object.seqNumber);
 						object.QuorumReply.remove(Integer.parseInt(p[0]));
@@ -109,15 +111,15 @@ public class MaekawaMsgHandler{
 				case "YIELD":
 					object.isLocked = false;
 					object.InqSent = false;
-					
-					object.messageOffered=object.pendingRequests.offer(object.lockedProcess[0]+" "+object.lockedProcess[1]);
+					Message m = new Message("", object.lockedProcess[0], -1, object.lockedProcess[1], null);
+					object.messageOffered=object.pendingRequests.offer(m);
 					pendingQueueHead = object.pendingRequests.peek();
 					if(pendingQueueHead==null){
 						object.lockedProcess[0]=null;
 						object.lockedProcess[1]=null;
 					}else if(pendingQueueHead!=null){
 						pendingQueueHead = object.pendingRequests.poll();
-						tempPendingQueueHead = pendingQueueHead.split(" ");
+						tempPendingQueueHead = pendingQueueHead.msgString.split(" ");
 						object.lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
 						object.lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
 						object.isLocked = true;
@@ -137,7 +139,7 @@ public class MaekawaMsgHandler{
 						object.lockedProcess[1]=null;
 					}else if(pendingQueueHead!=null){
 						pendingQueueHead = object.pendingRequests.poll();
-						tempPendingQueueHead = pendingQueueHead.split(" ");
+						tempPendingQueueHead = pendingQueueHead.msgString.split(" ");
 						object.lockedProcess[0]=Integer.parseInt(tempPendingQueueHead[0]);
 						object.lockedProcess[1]=Integer.parseInt(tempPendingQueueHead[1]);
 						object.isLocked = true;

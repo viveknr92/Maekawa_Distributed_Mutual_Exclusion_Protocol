@@ -40,8 +40,8 @@ public class Main {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		object.OutMsgs = new LinkedList<String>();
-		object.inqMsgs = new LinkedList<String>();
+		object.OutMsgs = new LinkedList<Message>();
+		object.inqMsgs = new LinkedList<Message>();
 		object.QuorumReply = new HashMap<Integer,Boolean>();
 		object.csEnterVector = new int[object.noOfNodes];
 		object.csTestVector = new int[object.noOfNodes];

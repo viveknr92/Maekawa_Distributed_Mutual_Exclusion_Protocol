@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,20 +34,20 @@ public class Maekawa {
 	String[] quorums;
 	int noOfNodes;
 	Socket[] clientSocket;
-	DataOutputStream[] clientOStream;
-	DataInputStream[] serverInStream;
+	ObjectOutputStream[] clientOStream;
+	ObjectInputStream[] serverInStream;
 	int nodeId;
 	String[] nodeNames;
 	int[] nodePorts;
-	Queue<String> OutMsgs;
-	Queue<String> inqMsgs;
+	Queue<Message> OutMsgs;
+	Queue<Message> inqMsgs;
 	String configFile;
 	int interReqDelay,csExecTime,noOfReq;
 	FileOutputStream out = null;
 	Boolean isLocked = false;
 	Integer NoOfGrants = 0;
-	Comparator<String> OurQueue = new PriorityQ();
-	PriorityQueue<String> pendingRequests = new PriorityQueue<String>(10,OurQueue);
+	Comparator<Message> OurQueue = new PriorityQ();
+	PriorityQueue<Message> pendingRequests = new PriorityQueue<Message>(10,OurQueue);
 	Integer[] lockedProcess = new Integer[2];
 	boolean InqSent = false;
 	HashMap<Integer,Boolean> QuorumReply;
@@ -107,8 +109,8 @@ public class Maekawa {
 	 */
 	public void runClient() throws IOException{
 		clientSocket = new Socket[noOfNodes];
-		clientOStream = new DataOutputStream[noOfNodes];
-		String currentOutgoingMessege = null;
+		clientOStream = new ObjectOutputStream[noOfNodes];
+		Message currentOutgoingMessege = null;
 		String[] messageParts;
 		/**
 		 * create and save all client outgoingStreams for all possible
@@ -117,7 +119,7 @@ public class Maekawa {
 		for(int neighbor=0; neighbor<noOfNodes;){
 			try{
 				clientSocket[neighbor] = new Socket(nodeNames[neighbor], nodePorts[neighbor]);
-				clientOStream[neighbor] = new DataOutputStream(clientSocket[neighbor].getOutputStream());
+				clientOStream[neighbor] = new ObjectOutputStream(clientSocket[neighbor].getOutputStream());
 				neighbor++;
 			}
 			catch (ConnectException e){
@@ -139,13 +141,14 @@ public class Maekawa {
 		 * is empty.
 		 */
 		while(true){
-			synchronized (OutMsgs) {
+			synchronized (OutMsgs) {//TODO
 				while(!OutMsgs.isEmpty()){
 					currentOutgoingMessege = OutMsgs.poll();
-					messageParts = currentOutgoingMessege.split("#");
+					messageParts = currentOutgoingMessege.msgString.split("#");
 					int receiverID = Integer.parseInt(messageParts[4].trim());
-					String messageToBeSent = messageParts[0]+ "#" + messageParts[1] + "#" + messageParts[2] + "#" + messageParts[3];
-					clientOStream[receiverID].writeUTF(messageToBeSent);
+					Message m = new Message(messageParts[0], Integer.parseInt(messageParts[1]), -1, Integer.parseInt(messageParts[2]), fromString(messageParts[3]));
+					//String messageToBeSent = messageParts[0]+ "#" + messageParts[1] + "#" + messageParts[2] + "#" + messageParts[3];
+					clientOStream[receiverID].writeObject(m);
 				}
 			}
 		
@@ -258,7 +261,7 @@ public class Maekawa {
 			NoOfGrants = 0;
 			csRequestGranted = false;
 			QuorumReply = new HashMap<Integer,Boolean>();
-			inqMsgs = new LinkedList<String>();
+			inqMsgs = new LinkedList<Message>();
 			MyArray = csEnterVector;
 			for(int i = 0;i< csEnterVector.length ; ++i)
 				if(i!=nodeId&& csTestVector[i]!=csEnterVector[i])
@@ -294,9 +297,10 @@ public class Maekawa {
 	 * @param neighbor
 	 * @param currentSeqNumber
 	 */
-	public void sendMessage(String message, int neighbor, int currentSeqNumber){
-			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
-			OutMsgs.add(messageToQueue);
+	public void sendMessage(String messageType, int neighbor, int currentSeqNumber){
+		Message m = new Message(messageType, nodeId, neighbor, currentSeqNumber, csEnterVector);
+		//String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
+		OutMsgs.add(m);
 	}
 	
 	/**

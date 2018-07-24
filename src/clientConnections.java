@@ -3,6 +3,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 
 /**
@@ -22,11 +23,11 @@ public class clientConnections extends Thread{
 	
 	public void run(){
 		InputStream inputStream = null;
-		DataInputStream reader = null;
-		String message = null;
+		ObjectInputStream reader = null;
+		Message message = null;
 		try{
 			inputStream = clientConnected.getInputStream();
-			reader = new DataInputStream(new BufferedInputStream(inputStream));
+			reader = new ObjectInputStream(inputStream);
 			
 		}
 		catch(IOException e){
@@ -34,13 +35,16 @@ public class clientConnections extends Thread{
 		}
 		while(true){
 			try{
-				while(reader.available()>0){
-					message = reader.readUTF();
-					synchronized (working) {
-						working.MsgHandling(message);
-					}
+				try {
+					message = (Message) reader.readObject();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+				synchronized (working) {
+					working.MsgHandling(message);
 			}
+		}
 			catch(EOFException e){
 				e.printStackTrace();
 				try {
