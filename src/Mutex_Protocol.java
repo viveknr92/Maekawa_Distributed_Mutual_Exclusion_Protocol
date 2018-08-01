@@ -45,6 +45,7 @@ public class Mutex_Protocol {
 	int[] csEnterVector;
 	int[] csTestVector;
 	boolean res=true;
+	int totalMsgsCount;
 	
 	/**
 	 * server function which will be called to make server of node
@@ -223,6 +224,7 @@ public class Mutex_Protocol {
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
 			for(String s : quorums){
+				totalMsgsCount++;
 				sendMessage(message, Integer.parseInt(s), currentSeqNumber);
 				
 			}
