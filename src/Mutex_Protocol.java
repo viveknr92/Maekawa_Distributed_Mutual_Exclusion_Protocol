@@ -222,7 +222,7 @@ public class Mutex_Protocol {
 			
 		}
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
-		System.out.println("Node: " + nodeId + "Response time" + (endTime - startTime));
+		System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
@@ -268,12 +268,13 @@ public class Mutex_Protocol {
 				e.printStackTrace();
 			}
 		}
-			
+		
 		try {
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println(nodeId + " Total Msg Complexity: " + totalMsgsCount);
 		System.out.println(nodeId + " is finished with all requests");
 	}
 }

@@ -3,3 +3,4 @@ bin/Maekawa.class
 bin/Maekawa.class
 bin/Maekawa.class
 *.class
+/configWith25Nodes.txt
