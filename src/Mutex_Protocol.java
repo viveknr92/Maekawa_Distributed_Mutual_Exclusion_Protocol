@@ -46,6 +46,8 @@ public class Mutex_Protocol {
 	int[] csTestVector;
 	boolean res=true;
 	int totalMsgsCount;
+	long startTime;
+	long endTime;
 	
 	/**
 	 * server function which will be called to make server of node
@@ -179,7 +181,7 @@ public class Mutex_Protocol {
 	synchronized void csEnter(){
 		synchronized(sentMsgQueue){
 			timeStamp++;
-			
+			startTime = System.currentTimeMillis();
 			boolean done=broadcastToQuorum("request", timeStamp);
 		}
 			
@@ -201,6 +203,7 @@ public class Mutex_Protocol {
 		synchronized(sentMsgQueue){
 			timeStamp++;
 			csEnterVector[nodeId]++;
+			endTime   = System.currentTimeMillis();
 			boolean done=broadcastToQuorum("release", timeStamp);
 			NumLocks = 0;
 			csRequestGranted = false;
@@ -219,12 +222,11 @@ public class Mutex_Protocol {
 			
 		}
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
-		System.out.println();
+		System.out.println("Node: " + nodeId + "Response time" + (endTime - startTime));
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
 			for(String s : quorums){
-				totalMsgsCount++;
 				sendMessage(message, Integer.parseInt(s), currentSeqNumber);
 				
 			}
@@ -232,6 +234,7 @@ public class Mutex_Protocol {
 	}
 
 	public void sendMessage(String message, int neighbor, int currentSeqNumber){
+			totalMsgsCount++;
 			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
 			sentMsgQueue.add(messageToQueue);
 	}
