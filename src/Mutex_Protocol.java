@@ -2,10 +2,12 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -48,7 +50,9 @@ public class Mutex_Protocol {
 	int totalMsgsCount;
 	long startTime;
 	long endTime;
-	
+	long startTime_throughput;
+	long endTime_throughput;
+	PrintWriter writer;
 	/**
 	 * server function which will be called to make server of node
 	 * up and running before it starts sending CS request messages
@@ -181,7 +185,7 @@ public class Mutex_Protocol {
 	synchronized void csEnter(){
 		synchronized(sentMsgQueue){
 			timeStamp++;
-			startTime = System.currentTimeMillis();
+			startTime_throughput = startTime = System.currentTimeMillis();			
 			boolean done=broadcastToQuorum("request", timeStamp);
 		}
 			
@@ -223,6 +227,7 @@ public class Mutex_Protocol {
 		}
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
 		System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
+		writer.println("Response time: " + (endTime - startTime));
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
@@ -241,7 +246,11 @@ public class Mutex_Protocol {
 	
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
-		
+		try {
+			writer = new PrintWriter(new File("test_data_" + nodeId +  ".csv"));
+		} catch (FileNotFoundException e2) {
+			e2.printStackTrace();
+		}
 		try {
 			Thread.currentThread();
 			Thread.sleep(2000);
@@ -274,7 +283,12 @@ public class Mutex_Protocol {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		endTime_throughput = System.currentTimeMillis();
 		System.out.println(nodeId + " Total Msg Complexity: " + totalMsgsCount);
 		System.out.println(nodeId + " is finished with all requests");
+		System.out.println(nodeId + " Total Response Time: " + (endTime_throughput - startTime_throughput));
+		writer.println("Total Msg Complexity: " + totalMsgsCount);
+		writer.println("Total Response Time: " + (endTime_throughput - startTime_throughput));
+		writer.close();
 	}
 }
