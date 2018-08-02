@@ -2,7 +2,7 @@
 #Author: Moses Ike. http://mosesike.org
 #This script needs 2 argument. path to config file, and netid
 
-PROG=Maekawa
+PROG=Main
 
 
 javac $PROG.java
@@ -68,7 +68,7 @@ do
 	'$interReqDel' '$noOfReq' " &
 		
 done
-
+wait
 #echo $netid@$host "java $PROG $rootNode '$nodes_location' '$neighbors' '$rootNode' \
 #		'$config_file_name' " &
 #sample output

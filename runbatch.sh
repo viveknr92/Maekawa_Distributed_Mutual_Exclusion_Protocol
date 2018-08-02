@@ -4,21 +4,17 @@ req=( "5" "20" "50")
 
 cs=( "5" "20" "50")
 
+counter=1
 for i in "${req[@]}"
 do
 	for j in "${cs[@]}"
 	do
 		c="${i}_$j"
-		cd $HOME/mae
 		./launcher.sh config_1_$c.txt vxn170230
-		read
-		echo "launcher done"
-		cd $HOME/mae
-		./cleanup.sh config_1_$c.txt vxn170230
-		read
+		echo "launcher done - $counter times"
+		./cleanup1.sh config_1_$c.txt vxn170230
 		echo "clean done"
+		counter=$((counter+1))
     done
 done
-echo "Everything done"
-read
 echo "Everything done"
