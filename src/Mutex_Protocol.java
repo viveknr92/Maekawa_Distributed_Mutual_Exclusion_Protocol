@@ -185,7 +185,7 @@ public class Mutex_Protocol {
 	synchronized void csEnter(){
 		synchronized(sentMsgQueue){
 			timeStamp++;
-			startTime_throughput = startTime = System.currentTimeMillis();			
+			startTime = System.currentTimeMillis();			
 			boolean done=broadcastToQuorum("request", timeStamp);
 		}
 			
@@ -257,7 +257,7 @@ public class Mutex_Protocol {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
+		startTime_throughput = startTime = System.currentTimeMillis();	
 		for(int i =0 ; i < noOfReq; ++i ){
 			csEnter();
 			try {
