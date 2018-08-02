@@ -246,8 +246,17 @@ public class Mutex_Protocol {
 	
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
+		File file = new File("/home/011/a/am/amp170830/Maekawa/node_" + noOfNodes +
+					"/" + "test_data_" + nodeId + "_" + interReqDelay + "_" + csExecTime + ".csv");
+
 		try {
-			writer = new PrintWriter(new File("test_data_" + nodeId +  ".csv"));
+			file.createNewFile();
+		} catch (IOException e3) {
+			// TODO Auto-generated catch block
+			e3.printStackTrace();
+		}
+		try {
+			writer = new PrintWriter(file);
 		} catch (FileNotFoundException e2) {
 			e2.printStackTrace();
 		}
