@@ -13,10 +13,12 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -83,6 +85,12 @@ public class Maekawa {
 	int[] csEnterVector;
 	int[] csTestVector;
 	boolean res=true;
+	int totalmsgsSent = 0;
+	long start_time = 0;
+	long end_time = 0;
+	long throput_start_time = 0;
+	long throput_end_time = 0;
+	PrintWriter writer;
 	
 	/**
 	 * Comparator to manage PriorityQueue.add() so that each request
@@ -480,7 +488,7 @@ public class Maekawa {
 	synchronized void csEnter(){
 		synchronized(outgoingMessages){
 			seqNumber++;
-			
+			start_time = System.currentTimeMillis();
 			boolean done=broadcastToQuorum("REQ", seqNumber);
 		}
 			
@@ -507,6 +515,7 @@ public class Maekawa {
 			//broadcast release
 			seqNumber++;
 			csEnterVector[nodeId]++;
+			end_time = System.currentTimeMillis();
 			boolean done=broadcastToQuorum("REL", seqNumber);
 			grantCounter = 0;
 			csRequestGranted = false;
@@ -524,7 +533,8 @@ public class Maekawa {
 			}
 			
 		}
-		System.out.println("Exiting CS "+nodeId + " "+ Arrays.toString(tempArray)+" "+" DME::"+res);
+		System.out.println("Node : "+ nodeId + " Response Time : " + (end_time - start_time));
+		System.out.println("Exiting CS "+ nodeId + " "+ Arrays.toString(tempArray)+" "+" DME::"+res);
 	}
 	
 	/**
@@ -549,6 +559,7 @@ public class Maekawa {
 	 */
 	public void sendMessage(String message, int neighbor, int currentSeqNumber){
 			String messageToQueue = message+"#"+nodeId+"#"+currentSeqNumber+"#"+Arrays.toString(csEnterVector)+"#"+neighbor;
+			totalmsgsSent++;
 			outgoingMessages.add(messageToQueue);
 	}
 	
@@ -560,14 +571,19 @@ public class Maekawa {
 	 */
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
-		
+		try {
+			writer = new PrintWriter(new File("node_data-" + nodeId + ".csv"));
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 		try {
 			Thread.currentThread();
 			Thread.sleep(2000);
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		
+		throput_start_time = System.currentTimeMillis();
 		for(int i =0 ; i < noOfReq; ++i ){
 			csEnter();
 			try {
@@ -594,6 +610,9 @@ public class Maekawa {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		throput_end_time = System.currentTimeMillis();
+		System.err.println(nodeId + " : Total Response time : " + (throput_end_time - throput_start_time));
+		System.err.println(nodeId + " : Total Messages sent : " + totalmsgsSent);
 		System.out.println(nodeId + " is finished with all requests");
 	}
 	
