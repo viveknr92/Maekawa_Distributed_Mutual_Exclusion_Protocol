@@ -246,7 +246,7 @@ public class Mutex_Protocol {
 	
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
-		File file = new File("/home/011/a/am/amp170830/Maekawa/node_" + noOfNodes +
+		File file = new File("node_" + noOfNodes +
 					"/" + "test_data_" + nodeId + "_" + interReqDelay + "_" + csExecTime + ".csv");
 
 		try {

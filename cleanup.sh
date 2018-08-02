@@ -1,33 +1,27 @@
-#!/bin/bash
-#Author: Moses Ike. http://mosesike.org
-#This script needs 2 argument. path to config file, and netid
 
-CONFIG=$1
-netid=$2
-
+CONFIG=$PWD/$1
+NETID=$2
 n=1
+
 cat $CONFIG | sed -e "s/#.*//" | sed -e "/^\s*$/d" |
 (
-    read i
-    #echo $i
-    nodes=$( echo $i | cut -f1 -d" ")
-    while read line 
-    do
-        host=$( echo $line | awk '{ print $2 }' )
+read line 
+numhosts=$( echo $line | awk '{ print $1 }' ) 
 
-        echo $host
-        #ssh $netid@$host killall -u $netid &
-        #ssh -o StrictHostKeyChecking=no $netid@$host "ps -u $USER | grep java | tr -s ' ' | cut -f1 -d' ' | xargs kill " &
-        ssh -o StrictHostKeyChecking=no $netid@$host "ps -fu $USER | grep java | tr -s ' ' | cut -f2 -d' ' | xargs kill " &
-        #sleep 1
-
-        n=$(( n + 1 ))
-        if [ $n -gt $nodes ];then
-        	break
-        fi
-    done
-   
+while [[ $n -le numhosts ]] 
+do
+	read line
+	node=$( echo $line | awk '{ print $1 }' )
+	hostname=$( echo $line | awk '{ print $2 }' )
+	port=$( echo $line | awk '{ print $3 }' )
+	if [[ $hostname == dc* ]]		
+	then
+		n=$(( n + 1 ))
+		ssh -o StrictHostKeyChecking=no $NETID@$hostname killall -u $NETID &
+	fi
+	sleep 1
+done
 )
-
-
+rm *.class *.out debug.txt temp
+wait
 echo "Cleanup complete"
