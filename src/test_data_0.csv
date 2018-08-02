@@ -1,0 +1,11 @@
+Response time: 22295,,"n={1,5,10,15}"
+Response time: 18851,,numOfReq = 10
+Response time: 20914,,"d = {5, 20, 50, 100}"
+Response time: 17128,,"c = {5, 20, 50, 100}"
+Response time: 28511,,
+Response time: 25737,,
+Response time: 23352,,
+Response time: 28527,,
+Response time: 17351,,
+Response time: 20904,,
+Total Msg Complexity: 399,,
