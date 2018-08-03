@@ -226,7 +226,7 @@ public class Mutex_Protocol {
 			
 		}
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
-		System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
+		System.out.println("Node: " + nodeId + " Response time : " + (endTime - startTime));
 		//writer.println("Response time: " + (endTime - startTime));
 	}
 
@@ -293,9 +293,9 @@ public class Mutex_Protocol {
 			e.printStackTrace();
 		}
 		endTime_throughput = System.currentTimeMillis();
-		System.out.println(nodeId + " Total Msg Complexity: " + totalMsgsCount);
-		System.out.println(nodeId + " is finished with all requests");
-		System.out.println(nodeId + " Total Response Time: " + (endTime_throughput - startTime_throughput));
+		System.out.println("Node: " + nodeId + " Total Msg Complexity: " + totalMsgsCount);
+		System.out.println("Node: " + nodeId + " is finished with all requests");
+		System.out.println("Node: " + nodeId + " Total Time taken : " + (endTime_throughput - startTime_throughput));
 //		writer.println("Total Msg Complexity: " + totalMsgsCount);
 //		writer.println("Total Response Time: " + (endTime_throughput - startTime_throughput));
 //		writer.close();
