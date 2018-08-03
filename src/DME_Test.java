@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 public class DME_Test {
 	int noOfNodes, noOfRequests;
@@ -35,8 +36,11 @@ public class DME_Test {
 				greater = true;
 			else if (vector1[i] < vector2[i])
 				lesser = true;
-		if (greater && lesser)
+		if (greater && lesser) {
+			System.out.println(Arrays.toString(vector1));
+			System.out.println(Arrays.toString(vector2));
 			return true;	/* the vectors are concurrent */
+		}
 		else
 			return false;	/* the vectors are not concurrent */
 	}
