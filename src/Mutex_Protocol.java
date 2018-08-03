@@ -52,7 +52,7 @@ public class Mutex_Protocol {
 	long endTime;
 	long startTime_throughput;
 	long endTime_throughput;
-	PrintWriter writer;
+	//PrintWriter writer;
 	/**
 	 * server function which will be called to make server of node
 	 * up and running before it starts sending CS request messages
@@ -227,7 +227,7 @@ public class Mutex_Protocol {
 		}
 		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
 		System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
-		writer.println("Response time: " + (endTime - startTime));
+		//writer.println("Response time: " + (endTime - startTime));
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
@@ -246,20 +246,20 @@ public class Mutex_Protocol {
 	
 	public void Application (){
 		MutualExclusion me = new MutualExclusion();
-		File file = new File("node_" + noOfNodes +
-					"/" + "test_data_" + nodeId + "_" + interReqDelay + "_" + csExecTime + ".csv");
-
-		try {
-			file.createNewFile();
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
-		}
-		try {
-			writer = new PrintWriter(file);
-		} catch (FileNotFoundException e2) {
-			e2.printStackTrace();
-		}
+//		File file = new File("node_" + noOfNodes +
+//					"/" + "test_data_" + nodeId + "_" + interReqDelay + "_" + csExecTime + ".csv");
+//
+//		try {
+//			file.createNewFile();
+//		} catch (IOException e3) {
+//			// TODO Auto-generated catch block
+//			e3.printStackTrace();
+//		}
+//		try {
+//			writer = new PrintWriter(file);
+//		} catch (FileNotFoundException e2) {
+//			e2.printStackTrace();
+//		}
 		try {
 			Thread.currentThread();
 			Thread.sleep(2000);
@@ -296,8 +296,8 @@ public class Mutex_Protocol {
 		System.out.println(nodeId + " Total Msg Complexity: " + totalMsgsCount);
 		System.out.println(nodeId + " is finished with all requests");
 		System.out.println(nodeId + " Total Response Time: " + (endTime_throughput - startTime_throughput));
-		writer.println("Total Msg Complexity: " + totalMsgsCount);
-		writer.println("Total Response Time: " + (endTime_throughput - startTime_throughput));
-		writer.close();
+//		writer.println("Total Msg Complexity: " + totalMsgsCount);
+//		writer.println("Total Response Time: " + (endTime_throughput - startTime_throughput));
+//		writer.close();
 	}
 }
