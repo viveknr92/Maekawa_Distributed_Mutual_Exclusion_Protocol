@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROG=MutexTester
+PROG=DME_Test
 CONFIG=$1
 
 
