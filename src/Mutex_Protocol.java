@@ -223,11 +223,12 @@ public class Mutex_Protocol {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
+			System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
+			System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
+			writer.println("Response time: " + (endTime - startTime));
+			startTime = endTime = 0;
 		}
-		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
-		System.out.println("Node: " + nodeId + " Response time" + (endTime - startTime));
-		writer.println("Response time: " + (endTime - startTime));
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){
@@ -266,7 +267,7 @@ public class Mutex_Protocol {
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
-		startTime_throughput = startTime = System.currentTimeMillis();	
+		startTime_throughput  = System.currentTimeMillis();	
 		for(int i =0 ; i < noOfReq; ++i ){
 			csEnter();
 			try {
