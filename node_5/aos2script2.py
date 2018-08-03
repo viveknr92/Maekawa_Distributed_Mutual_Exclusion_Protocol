@@ -20,10 +20,11 @@ arr2 = [5,20,50]
 comb = list(itertools.product(arr1, arr2))
 
 listOfSum = []
-
+listOfTime = []
 path = r'C:\Users\Abhishek\eclipse-workspace\Maekawa_Protocol\node_5'
 for i in comb:
     totalMsgComp = 0
+    totalTime = 0
     msgComp = []
     throughput = []
     files = []
@@ -42,5 +43,9 @@ for i in comb:
     for msg in msgComp:
         totalMsgComp += int(msg[0].split(": ", 1)[1])
 
+    for time in throughput:
+        totalTime += int(time[0].split(": ", 1)[1])
     listOfSum.append(totalMsgComp)
+    listOfTime.append(totalTime)
 print(listOfSum)
+print(listOfTime)
