@@ -51,4 +51,5 @@ do
 	'$interReqDel' '$noOfReq' " &
 		
 done
-wait
+read
+echo "All Done"
