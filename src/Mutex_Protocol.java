@@ -223,11 +223,11 @@ public class Mutex_Protocol {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+			System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
+			System.out.println("Node: " + nodeId + " Response time : " + (endTime - startTime));
+			//writer.println("Response time: " + (endTime - startTime));
 		}
-		System.out.println("Node: " + nodeId + " Leave CS "+ " "+ Arrays.toString(MyArray));
-		System.out.println("Node: " + nodeId + " Response time : " + (endTime - startTime));
-		//writer.println("Response time: " + (endTime - startTime));
+		
 	}
 
 	public boolean broadcastToQuorum(String message, int currentSeqNumber){

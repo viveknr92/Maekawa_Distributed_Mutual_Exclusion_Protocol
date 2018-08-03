@@ -30,7 +30,7 @@ for i in comb:
             row = list(readCSV)
             for i in row[:-2]:
                 totResTime += int(i[0].split(": ", 1)[1])
-            totResTime /= 9
+            totResTime /= 10
             msgComp.append(row[10])
             throughput.append(row[11])
             avgResTime.append(totResTime)

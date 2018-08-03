@@ -9,4 +9,13 @@ public class ExpProbTime{
 		return (int)(-var * Math.log(Math.random()));
 	}
 	
+	public static void main(String[] args) {
+		for(double i = 20; i < 35; i++) {
+			ExpProbTime obj = new ExpProbTime(50);
+			System.out.println(obj.RandomNum());
+		}
+		
+	}
+	
+	
 }
