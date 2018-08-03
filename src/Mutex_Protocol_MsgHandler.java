@@ -2,14 +2,14 @@
 public class Mutex_Protocol_MsgHandler{
 	
 		String message = null;
-		Mutex_Protocol object;
+		Mutex_Protocol mutex;
 		
-		public Mutex_Protocol_MsgHandler(String message,Mutex_Protocol object) {
+		public Mutex_Protocol_MsgHandler(String message,Mutex_Protocol mutex) {
 			this.message=message;
 		}
 		
-		public Mutex_Protocol_MsgHandler(Mutex_Protocol object) {
-			this.object = object;
+		public Mutex_Protocol_MsgHandler(Mutex_Protocol mutex) {
+			this.mutex = mutex;
 		}
 
 		public void MsgHandling(String message){
@@ -17,51 +17,51 @@ public class Mutex_Protocol_MsgHandler{
 		String[] msgParameters,tempRequest;
 		String requestQueue;
 		
-		synchronized(object.sentMsgQueue){
+		synchronized(mutex.sentMsgQueue){
 			if(message!=null){
 				msgParameters = message.split("#");
 				int sending_id = Integer.parseInt(msgParameters[1].trim());
 				int scalar = Integer.parseInt(msgParameters[2].trim());
-				int[] newVector= object.fromString(msgParameters[3].trim());
+				int[] newVector= mutex.fromString(msgParameters[3].trim());
 				for (int i=0; i < newVector.length; i++){ 
-					if (newVector[i] >= object.csEnterVector[i])
-						object.csEnterVector[i] = newVector[i];
+					if (newVector[i] >= mutex.csEnterVector[i])
+						mutex.csEnterVector[i] = newVector[i];
 					
 				}
-				if(scalar > object.timeStamp)
-					object.timeStamp = scalar;
-				object.timeStamp++;
+				if(scalar > mutex.timeStamp)
+					mutex.timeStamp = scalar;
+				mutex.timeStamp++;
 				/**
 				 * received message: 'Request' to access CS
 				 */
 				if(msgParameters[0].equals("request")){	
-					if(!object.isLocked){
-						object.lockedProcess[0]=sending_id;
-						object.lockedProcess[1]=scalar;
-						object.isLocked = true;
-						object.timeStamp++;
-						object.sendMessage("lock", sending_id, object.timeStamp);
+					if(!mutex.isLocked){
+						mutex.lockedProcess[0]=sending_id;
+						mutex.lockedProcess[1]=scalar;
+						mutex.isLocked = true;
+						mutex.timeStamp++;
+						mutex.sendMessage("lock", sending_id, mutex.timeStamp);
 					}else{
 						//push into pending priority queue based on time stamp.
-						object.msgSent=object.requestQueue.offer(sending_id+" "+scalar);
-						String s = object.requestQueue.peek();
+						mutex.msgSent=mutex.requestQueue.offer(sending_id+" "+scalar);
+						String s = mutex.requestQueue.peek();
 						String[] parts = s.split(" ");
 						int topWaitingID = Integer.parseInt(parts[0].trim());
 						int topWaitingSeq = Integer.parseInt(parts[1].trim());
-						if(scalar < object.lockedProcess[1] || (scalar == object.lockedProcess[1] && sending_id < object.lockedProcess[0])){
-							if(!object.isInqSent){
-								object.timeStamp++;
-								object.sendMessage("inquire", object.lockedProcess[0],object.timeStamp);//sendInq
-								object.isInqSent = true;
+						if(scalar < mutex.lockedProcess[1] || (scalar == mutex.lockedProcess[1] && sending_id < mutex.lockedProcess[0])){
+							if(!mutex.isInqSent){
+								mutex.timeStamp++;
+								mutex.sendMessage("inquire", mutex.lockedProcess[0],mutex.timeStamp);//sendInq
+								mutex.isInqSent = true;
 							}
 							else if(topWaitingSeq < scalar || topWaitingSeq == scalar && topWaitingID < sending_id ){
-								object.timeStamp++;
-								object.sendMessage("fail", sending_id,object.timeStamp);//sendFail
+								mutex.timeStamp++;
+								mutex.sendMessage("fail", sending_id,mutex.timeStamp);//sendFail
 							}
 						}
 						else{
-							object.timeStamp++;
-							object.sendMessage("fail", sending_id, object.timeStamp);//send fail
+							mutex.timeStamp++;
+							mutex.sendMessage("fail", sending_id, mutex.timeStamp);//send fail
 						}
 						
 					}
@@ -70,21 +70,21 @@ public class Mutex_Protocol_MsgHandler{
 					 * received message: 'Grant' to access CS
 					 */
 				else if(msgParameters[0].equals("lock")){
-					boolean done=object.grantLock(sending_id);
+					boolean done=mutex.grantLock(sending_id);
 					
 				}
 					/**
 					 * received message: 'Inquire' to release access to CS
 					 */
 				else if(msgParameters[0].equals("inquire")){
-					if(object.hasReceivedFailed.containsValue(false)){
-						object.timeStamp++;
-						object.sendMessage("yield", sending_id, object.timeStamp);//send yield
-						object.hasReceivedFailed.remove(sending_id);
-						object.NumLocks--;
-					}else if((object.NumLocks < object.quorums.length )){
+					if(mutex.hasReceivedFailed.containsValue(false)){
+						mutex.timeStamp++;
+						mutex.sendMessage("yield", sending_id, mutex.timeStamp);//send yield
+						mutex.hasReceivedFailed.remove(sending_id);
+						mutex.NumLocks--;
+					}else if((mutex.NumLocks < mutex.quorums.length )){
 						
-						object.inqMsgs.add(sending_id+" "+scalar);
+						mutex.inqMsgs.add(sending_id+" "+scalar);
 					}
 					
 				}
@@ -93,15 +93,15 @@ public class Mutex_Protocol_MsgHandler{
 					 */
 				else if(msgParameters[0].equals("fail")){						
 					//monitor the processes from which fail has been received
-					object.hasReceivedFailed.put(sending_id, false);
+					mutex.hasReceivedFailed.put(sending_id, false);
 					//Check if there is any in inq queue, if yes send yield, decrement NumLocks.
-					while(!object.inqMsgs.isEmpty()){
-						String m = object.inqMsgs.poll();
+					while(!mutex.inqMsgs.isEmpty()){
+						String m = mutex.inqMsgs.poll();
 						String[] p = m.split(" ");
-						object.timeStamp++;
-						object.sendMessage("yield", Integer.parseInt(p[0]), object.timeStamp);
-						object.hasReceivedFailed.remove(Integer.parseInt(p[0]));
-						object.NumLocks--;
+						mutex.timeStamp++;
+						mutex.sendMessage("yield", Integer.parseInt(p[0]), mutex.timeStamp);
+						mutex.hasReceivedFailed.remove(Integer.parseInt(p[0]));
+						mutex.NumLocks--;
 					}
 				
 				}
@@ -109,42 +109,42 @@ public class Mutex_Protocol_MsgHandler{
 					 * received message: 'Yield' to give back access of CS
 					 */
 				else if(msgParameters[0].equals("yield")){
-					object.isLocked = false;
-					object.isInqSent = false;
+					mutex.isLocked = false;
+					mutex.isInqSent = false;
 					
-					object.msgSent=object.requestQueue.offer(object.lockedProcess[0]+" "+object.lockedProcess[1]);
-					requestQueue = object.requestQueue.peek();
+					mutex.msgSent=mutex.requestQueue.offer(mutex.lockedProcess[0]+" "+mutex.lockedProcess[1]);
+					requestQueue = mutex.requestQueue.peek();
 					if(requestQueue==null){
-						object.lockedProcess[0]=null;
-						object.lockedProcess[1]=null;
+						mutex.lockedProcess[0]=null;
+						mutex.lockedProcess[1]=null;
 					}else if(requestQueue!=null){
-						requestQueue = object.requestQueue.poll();
+						requestQueue = mutex.requestQueue.poll();
 						tempRequest = requestQueue.split(" ");
-						object.lockedProcess[0]=Integer.parseInt(tempRequest[0]);
-						object.lockedProcess[1]=Integer.parseInt(tempRequest[1]);
-						object.isLocked = true;
-						object.timeStamp++;
-						object.sendMessage("lock", Integer.parseInt(tempRequest[0]), object.timeStamp);
+						mutex.lockedProcess[0]=Integer.parseInt(tempRequest[0]);
+						mutex.lockedProcess[1]=Integer.parseInt(tempRequest[1]);
+						mutex.isLocked = true;
+						mutex.timeStamp++;
+						mutex.sendMessage("lock", Integer.parseInt(tempRequest[0]), mutex.timeStamp);
 					}
 				}
 					/**
 					 * received message: 'Release' after CS access
 					 */
 				else if(msgParameters[0].equals("release")){
-					object.isLocked = false;
-					object.isInqSent = false;
-					requestQueue = object.requestQueue.peek();
+					mutex.isLocked = false;
+					mutex.isInqSent = false;
+					requestQueue = mutex.requestQueue.peek();
 					if(requestQueue==null){
-						object.lockedProcess[0]=null;
-						object.lockedProcess[1]=null;
+						mutex.lockedProcess[0]=null;
+						mutex.lockedProcess[1]=null;
 					}else if(requestQueue!=null){
-						requestQueue = object.requestQueue.poll();
+						requestQueue = mutex.requestQueue.poll();
 						tempRequest = requestQueue.split(" ");
-						object.lockedProcess[0]=Integer.parseInt(tempRequest[0]);
-						object.lockedProcess[1]=Integer.parseInt(tempRequest[1]);
-						object.isLocked = true;
-						object.timeStamp++;
-						object.sendMessage("lock", Integer.parseInt(tempRequest[0]), object.timeStamp);
+						mutex.lockedProcess[0]=Integer.parseInt(tempRequest[0]);
+						mutex.lockedProcess[1]=Integer.parseInt(tempRequest[1]);
+						mutex.isLocked = true;
+						mutex.timeStamp++;
+						mutex.sendMessage("lock", Integer.parseInt(tempRequest[0]), mutex.timeStamp);
 					}
 				}	
 			}

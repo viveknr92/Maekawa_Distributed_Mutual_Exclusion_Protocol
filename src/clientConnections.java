@@ -9,9 +9,9 @@ public class clientConnections extends Thread{
 	Socket clientConnected;
 	Mutex_Protocol_MsgHandler working;
 	
-	public clientConnections(Socket clientConnected, Mutex_Protocol object){
+	public clientConnections(Socket clientConnected, Mutex_Protocol mutex){
 		this.clientConnected=clientConnected;
-		this.working = new Mutex_Protocol_MsgHandler(object);
+		this.working = new Mutex_Protocol_MsgHandler(mutex);
 	}
 	
 	public void run(){

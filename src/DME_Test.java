@@ -26,46 +26,46 @@ public class DME_Test {
 	  }
 	
 
-	static boolean	isDME_Overlap(int v[], int w[])
+	static boolean	isDME_Overlap(int vector1[], int vector2[])
 	{
-		boolean greater=false, less=false;
+		boolean greater=false, lesser=false;
 
-		for (int i=0; i < v.length; i++) 
-			if (v[i] > w[i])
+		for (int i=0; i < vector1.length; i++) 
+			if (vector1[i] > vector2[i])
 				greater = true;
-			else if (v[i] < w[i])
-				less = true;
-		if (greater && less)
+			else if (vector1[i] < vector2[i])
+				lesser = true;
+		if (greater && lesser)
 			return true;	/* the vectors are concurrent */
 		else
 			return false;	/* the vectors are not concurrent */
 	}
 	public static void main(String args[]) throws IOException {
 		
-		DME_Test object = new DME_Test();
+		DME_Test mutex = new DME_Test();
 		if (args.length != 2) {
             System.exit(0);
             }
-		object.noOfNodes = Integer.parseInt(args[0]);
-		object.noOfRequests = Integer.parseInt(args[1]);
-		object.files = new BufferedReader[object.noOfNodes];
-		object.vectors = new int[object.noOfNodes][];
-		for(int i =0;i<object.noOfNodes;++i){
+		mutex.noOfNodes = Integer.parseInt(args[0]);
+		mutex.noOfRequests = Integer.parseInt(args[1]);
+		mutex.files = new BufferedReader[mutex.noOfNodes];
+		mutex.vectors = new int[mutex.noOfNodes][];
+		for(int i =0;i<mutex.noOfNodes;++i){
 			try {
-				object.files[i] = new BufferedReader(new InputStreamReader(new FileInputStream("logs-"+i+".out")));
+				mutex.files[i] = new BufferedReader(new InputStreamReader(new FileInputStream("logs-"+i+".out")));
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		boolean concurrent=false;
-		for(int j = 0;j<object.noOfRequests&!concurrent;++j){
-			for(int i =0;i<object.noOfNodes;++i){
-				object.vectors[i] = fromString(object.files[i].readLine());
+		for(int j = 0;j<mutex.noOfRequests&!concurrent;++j){
+			for(int i =0;i<mutex.noOfNodes;++i){
+				mutex.vectors[i] = fromString(mutex.files[i].readLine());
 			}
-			for(int i =0;i<object.noOfNodes&!concurrent;++i){
-				for(int k =i+1;k<object.noOfNodes&!concurrent;++k){
-					concurrent=isDME_Overlap(object.vectors[i], object.vectors[k]);
+			for(int i =0;i<mutex.noOfNodes&!concurrent;++i){
+				for(int k =i+1;k<mutex.noOfNodes&!concurrent;++k){
+					concurrent=isDME_Overlap(mutex.vectors[i], mutex.vectors[k]);
 				}				
 			}			
 		}
